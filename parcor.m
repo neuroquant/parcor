@@ -11,13 +11,14 @@ function result = parcor(X,opts)
 	% OUTPUT
 	%
 	% result
-	% result.Rho: 	n_regions x n_regions partial correlation matrix
-	% result.Theta:	n_regions x n_regions inverse covariance  matrix
-	% result.Var:	n_regions x 1 ; diagonal matrix of partial variances
-	% result.opts:	options parameter
-	% result.dfe:	naive degrees of freedom for t-statistic for standard partial correlation. Does not apply if ridge penalty is used. 
-	% result.Zstat: If no ridge penalty, apply fisher z-transform and standardize using sample variance. 
-	% result.date: 	date,provenance of results
+	% result.Rho: 		n_regions x n_regions partial correlation matrix
+	% result.Theta:		n_regions x n_regions inverse covariance  matrix
+	% result.Var:		n_regions x 1 ; diagonal matrix of variances
+	% result.InvVar:	n_regions x 1 ; diagonal matrix of partial variances
+	% result.opts:		options parameter
+	% result.dfe:		naive degrees of freedom for t-statistic for standard partial correlation. Does not apply if ridge penalty is used. 
+	% result.Zstat: 	If no ridge penalty, apply fisher z-transform and standardize using sample variance. 
+	% result.date: 		date,provenance of results
 	% 
 	% 
 	% Examples
@@ -38,6 +39,10 @@ function result = parcor(X,opts)
 	Sighat = cov(X);
 	[V D] = eig(Sighat);
 	
+	% Rescale Sighat to be correlation matrix
+	diagW = diag(diag(Sighat)); 
+	Sighat = inv(sqrt(diagW))*Sighat*inv(sqrt(diagW));
+
 	try
 		assert(sum(diag(D)<=0)==0,'Zero or Negative Eigenvalues');
 	catch
@@ -45,7 +50,7 @@ function result = parcor(X,opts)
 	end
 	
 	if(isempty(opts)|isempty(opts.lambda))	
-		if(min(diag(D))>0)
+		if(min(diag(D))>.001)
 			if(m>=3*p)
 				opts.lambda = 0;
 			elseif(m>=2*p)
@@ -63,12 +68,15 @@ function result = parcor(X,opts)
 	if(~useRidge)
 		Theta = inv(Sighat);
 	else
-		Theta = inv(Sighat+opts.lambda*eye(p));
+		Theta = inv(Sighat+opts.lambda*eye(p)); % Type 1, Ridge Threshold
 	end
 	
 	diagTheta = diag(diag(Theta));
 	Rho = -inv(sqrt(diagTheta))*triu(Theta,1)*inv(sqrt(diagTheta));
 	Rho = eye(p)+Rho+Rho';
+	
+	% Rescaling back Theta, since Sighat is correlation matrix
+	Theta = inv(sqrt(diagW))*Theta*inv(sqrt(diagW));
 	
 	% Z-transformed and 
 	if(~useRidge)
@@ -79,7 +87,8 @@ function result = parcor(X,opts)
 	
 	result.Rho = Rho;	
 	result.Theta = Theta;	
-	result.Var = diag(diagTheta); 
+	result.Var = diag(diagW); % Variances
+	result.InvVar = diag(diagTheta); % Inverse Variances used to normalize partial correlation matrix.
 	result.opts = opts;
 	if(useRidge)
 		result.dfe = 'NA';
