@@ -21,7 +21,8 @@ filename = 'SP_pMFG_Bilateral';
 load('../datasets/SP_pMFG_Bilateral','Data'); 
 for cc=1:size(Data,3)
 	cc
-	results{cc} = parcor(Data(:,:,cc),struct('lambda',[],'visible',0));
+	results{cc} = parcor(Data(:,:,cc),struct('lambda',[],'visible',0,'ridgeType',1));
 end
+
 save(filename,'results','-append');
 clear;

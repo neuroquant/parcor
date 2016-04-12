@@ -7,6 +7,7 @@ function result = parcor(X,opts)
 	%
 	% opts
 	% opts.lambda: 	ridge penalty. 0 by default if n_samples > 3*n_regions else set to .1
+	% opts.ridgeType: no penalty, ridge type 1 or ridge type 2
 	% 
 	% OUTPUT
 	%
@@ -30,8 +31,10 @@ function result = parcor(X,opts)
 	assert(length(size(X))==2,'X has wrong dimensions');
 	assert(m>2*p,'Sample size is inadequate for this function')
 	try
-		assert(abs(sum(mean(X(:,:,1))))<1e-10,'Not zero-mean centered. Please center time-series')
+		assert(abs(sum(mean(X(:,:,1))))<1e-10,'Not zero-mean centered. Please center time-series'); 
+		meanX_i = zeros(1,p);
 	catch
+		meanX_i = mean(X,1);		
 		X = bsxfun(@minus,X,mean(X,1));
 		assert(abs(sum(mean(X(:,:,1))))<1e-10,'Unsuccessful centering time-series')	
 	end
@@ -42,15 +45,17 @@ function result = parcor(X,opts)
 	% Rescale Sighat to be correlation matrix
 	diagW = diag(diag(Sighat)); 
 	Sighat = inv(sqrt(diagW))*Sighat*inv(sqrt(diagW));
+	Xcorr = bsxfun(@rdivide,X,diag(sqrt(diagW))');
 
 	try
 		assert(sum(diag(D)<=0)==0,'Zero or Negative Eigenvalues');
 	catch
-		disp('Using ridge penalization. Covariance matrix is not positive definite');
+		disp('Covariance matrix is not positive definite');
 	end
 	
 	if(isempty(opts)|isempty(opts.lambda))	
-		if(min(diag(D))>.001)
+		if(min(diag(D))>.001)			
+			% Dumb defaults, replace with analytic or CV based thresholds.
 			if(m>=3*p)
 				opts.lambda = 0;
 			elseif(m>=2*p)
@@ -58,17 +63,72 @@ function result = parcor(X,opts)
 			else
 				opts.lambda = .05;
 			end
+			
 		else
+			% Dumb defaults, replace with analytic or CV based thresholds.
 			opts.lambda = min(diag(D))+.1;
+			
+			% Shaffer-Strimmer analytical lambda
+			% opts.lambda_ss = sum(sig_var) - cov(target,sigma) - bias(sigma)(target-sigma)/sum((target-sigma).^2); 
+			% opts.lambda = max(0,min(1,opts.lambda_ss));	
+			if(opts.ridgeType==1)
+				
+				% Shaffer-Strimmer, analytical formula for type D
+				for ii=1:p
+					for jj=ii+1:p
+						W_kij(:,ii,jj) = (Xcorr(:,ii)-meanX_i(ii)).*(Xcorr(:,jj)-meanX_i(jj));
+						W_kij(:,jj,ii) = W_kij(:,ii,jj);
+					end
+				end		
+				assert(sum(sum(triu(Sighat-squeeze(mean(W_kij,1)),1).^2))/nchoosek(p,2)< 1e-3,'Verifying mean W_kij is empirical covariance');		 
+				var_Sighat = m/(m-1)^3*squeeze(sum(bsxfun(@minus,W_kij,reshape(Sighat, [1 p p])).^2,1));
+				opts.lambda_ss = sum(sum(triu(var_Sighat,1)))/sum(sum(triu(Sighat.^2,1)));
+				opts.lambda = max(0,min(1,opts.lambda_ss));
+				
+			elseif(opts.ridgeType==2)
+				
+				% Shaffer-Strimmer, analytical formula for type A
+				for ii=1:p
+					for jj=ii:p
+						W_kij(:,ii,jj) = (Xcorr(:,ii)-meanX_i(ii)).*(Xcorr(:,jj)-meanX_i(jj));
+						W_kij(:,jj,ii) = W_kij(:,ii,jj);
+					end
+				end		
+				disp('Verifying mean W_kij is empirical covariance'); 
+				assert(sum(sum(triu(Sighat-squeeze(mean(W_kij,1)),1).^2))/nchoosek(p,2)< 1e-3,'Verifying mean W_kij is empirical covariance');			 
+				var_Sighat = m/(m-1)^3*squeeze(sum(bsxfun(@minus,W_kij,reshape(Sighat, [1 p p])).^2,1));
+				opts.lambda_ss = sum(sum(var_Sighat))/(2*(sum(sum(triu(Sighat.^2,1))))+ sum((diag(Sighat)-ones(p,1)).^2));
+				opts.lambda = max(0,min(1,opts.lambda_ss));
+						
 		end
 	end
-		
-	useRidge = (opts.lambda~=0);
 	
-	if(~useRidge)
+		
+	useRidge = (opts.lambda~=0)*opts.ridgeType;
+	
+	% if(~useRidge)
+	% 	Theta = inv(Sighat);
+	% else
+	% 	Theta = inv(Sighat+opts.lambda*eye(p)); % Type 1, Ridge Threshold
+	% end
+	
+	switch useRidge
+		
+	case 0
+		Target = [];
 		Theta = inv(Sighat);
-	else
-		Theta = inv(Sighat+opts.lambda*eye(p)); % Type 1, Ridge Threshold
+	case 1
+		disp('Using Ridge Penalization, Type I')
+		Target = diag(diag(Sighat)); % Diagonal matrix with variances from Sighat. 
+		
+		Theta = inv((1-opts.lambda)*Sighat + opts.lambda*Target); % Type I, Ledoit-Wolf Ridge Penalty. 
+	case 2
+		disp('Using Ridge Penalization, Type II')	
+		Target = eye(p);
+		
+		% Shaffer-Strimmer, analytical formula for type A
+		
+		Theta = inv(Sighat+opts.lambda*eye(p)); % Type II, Ridge Penalty
 	end
 	
 	diagTheta = diag(diag(Theta));
@@ -78,7 +138,7 @@ function result = parcor(X,opts)
 	% Rescaling back Theta, since Sighat is correlation matrix
 	Theta = inv(sqrt(diagW))*Theta*inv(sqrt(diagW));
 	
-	% Z-transformed and 
+	% Z-transformed  
 	if(~useRidge)
 		df = m-3-p;
 		samplevar = 1/sqrt(df);
