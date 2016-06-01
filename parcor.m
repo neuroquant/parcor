@@ -56,7 +56,7 @@ function result = parcor(X,opts)
 	if(isempty(opts)|isempty(opts.lambda))
 		% if(min(diag(D))>.001)
 		% 	% Dumb defaults, replace with analytic or CV based thresholds.
-		if(m>=5*p)
+		if(m>=10*p)
 				opts.lambda = 0;
 			% elseif(m>=2*p)
 			% 	opts.lambda = .01;

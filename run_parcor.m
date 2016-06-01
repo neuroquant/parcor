@@ -21,6 +21,7 @@
 %filename = 'SP_pMFG_4.2.mat';
 %filename = 'SP_aMFG_4.1.mat';
 %filename = 'SP_pMFG_left_5.11.mat';
+load('pcnets_options.mat')
 
 for ii=1:length(opts.conditions)
 	filename = opts.outputFiles{ii};
@@ -67,5 +68,5 @@ for ii=1:length(opts.conditions)
 	save([filename '.mat'],'results','global_network','-append');
 	nii_struct = make_nii(global_network);
 	save_nii(nii_struct,[filename '.nii']);
-	clear;
+	clear Data results;
 end
