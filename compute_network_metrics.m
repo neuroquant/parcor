@@ -71,10 +71,34 @@ for ii=1:length(opts.conditions)
 	end
 	save([filename '.mat'],'results','-append');
 end
-%%%%%%% Export to Tables %%%%%%%%%%%%%
+%%%%%%% Export to Tables %%%%%%%%%
 
 
 
+%%%%%%% Plot Results %%%%%%%%%%%
+figure('Position',[100 100 800 400]); set(gcf,'Renderer','OpenGL');
+%%%%%%%%%%%%%%%%%%%%%%%%
+fontsz = 20;
+g = gramm('x',results{cc}.netopts.taus,'y',results{cc}.metrics.centralization);
+g.geom_point();
+g.geom_line();
+g.set_names('x','Thresholds','y','Centralization');
+g.set_title('Centralization');
+%%%
+% Do the actual drawing
+g.draw();
+ax(1) = get(gca,'xlabel'); ax(2) = get(gca,'ylabel'); ax(3) = get(gca,'title');
+set(ax,'fontsize',fontsz)
+set(gca,'linewidth',3)
+
+% %Jittered scatter plot
+% g(1,2).geom_jitter('width',0.4,'height',0);
+% g(1,2).set_title('geom_jitter()');
+
+% %Boxplots
+% g(2,2).stat_boxplot();
+% g(2,2).set_title('stat_boxplot()');
+%
 
 
 % Remove packages
