@@ -16,8 +16,8 @@ function [metrics, opts] = call_netsci(A,opts)
 	% Check directed or undirected
 
 	p=size(A,1);
-	tau_start = .01;
-	tau_stop = .3*max(max(triu(abs(A),1)));
+	tau_start = opts.tau_start;
+	tau_stop =  opts.tau_stop;
 
 	if(opts.logscale)
 		taus = logspace(log10(tau_start),log10(tau_stop),n_thresh);
@@ -38,8 +38,8 @@ for metric_no = 1:length(opts.bct_num)
 	bct_num = opts.bct_num(metric_no);
 
 	if(isWeighted)
-			netstat_global = 0;
-			netstat_nodes = zeros(p,1);
+			netstat_global = [];
+			netstat_nodes = zeros(p,n_thresh);
 		for tau=1:length(taus)
 			Sighat = A; Sighat(find(eye(p))) = 0; Sighat = abs(Sighat);
 			softSig = triu((abs(Sighat)-taus(tau)),1);
@@ -47,23 +47,31 @@ for metric_no = 1:length(opts.bct_num)
 			softthreshSig = sign(Sighat).*threshSig;
 			softthreshSig = softthreshSig + softthreshSig';
 			assert(sum(diag(softthreshSig)<=0)~=0,'Negative values on diagonal');
-			affinitySig = exp(-(softthreshSig).^2/.15);
+			affinitySig = eye(p)+exp(-(softthreshSig).^2/.01);
 			switch func2str(bct_funs{bct_num})
-			case 'betweenness_wei'
-				tmp_stats = feval(bct_funs{bct_num},affinitySig);
-				if(isScaled)
-					tmp_stats = tmp_stats/((p-1)*(p-2));
-				end
-			case 'efficiency_wei'
-				tmp_stats = feval(bct_funs{bct_num},affinitySig,1);
-			otherwise
-				tmp_stats = feval(bct_funs{bct_num},softthreshSig);
+				case 'betweenness_wei'
+					tmp_stats = feval(bct_funs{bct_num},affinitySig);
+					if(isScaled)
+						tmp_stats = tmp_stats/((p-1)*(p-2));
+					end
+				case 'current_flow_metrics'
+					tmp_stats = feval(@callnetworkx,affinitySig,1,0);
+					if(isScaled)
+						tmp_stats(:,1) = tmp_stats(:,1)/((p-1)*(p-2));
+					end
+				case 'efficiency_wei'
+					tmp_stats = feval(bct_funs{bct_num},affinitySig,1);
+				otherwise
+					tmp_stats = feval(bct_funs{bct_num},affinitySig);
 			end
 			if(~isreal(tmp_stats))
 				warning('Network metrics are complex. Taking absolute values');
 				tmp_stats = abs(tmp_stats);
 			end
-			netstat_nodes(:,tau) = tmp_stats;
+			netstat_nodes(:,tau) = tmp_stats(:,1);
+			if(strcmp('current_flow_metrics',func2str(bct_funs{bct_num})))
+				netstat_nodes(:,length(taus)+tau) = tmp_stats(:,2);
+			end
 		end
 	else
 
@@ -79,6 +87,11 @@ for metric_no = 1:length(opts.bct_num)
 				if(isScaled)
 					tmp_stats = tmp_stats/((p-1)*(p-2));
 				end
+			case 'current_flow_metrics'
+				tmp_stats = feval(@callnetworkx,1*(abs(Sighat)>taus(tau)),0,0);
+				if(isScaled)
+					tmp_stats(:,1) = tmp_stats(:,1)/((p-1)*(p-2));
+				end
 			case 'efficiency_bin'
 				tmp_stats = feval(bct_funs{bct_num},1*(abs(Sighat)>taus(tau)),1);
 			otherwise
@@ -88,13 +101,19 @@ for metric_no = 1:length(opts.bct_num)
 				warning('Network metrics are complex. Taking absolute values');
 				tmp_stats = abs(tmp_stats);
 			end
-			netstat_nodes(:,tau) = tmp_stats;
+			netstat_nodes(:,tau) = tmp_stats(:,1);
+			if(strcmp('current_flow_metrics',func2str(bct_funs{bct_num})))
+				netstat_nodes(:,length(taus)+tau) = tmp_stats(:,2);
+			end
 		end
 
 	end
 
 		metrics(metric_no).global = netstat_global;
-		metrics(metric_no).nodal = netstat_nodes;
+		metrics(metric_no).nodal = netstat_nodes(:,1:length(taus));
+		if(strcmp('current_flow_metrics',func2str(bct_funs{bct_num})))
+			metrics(metric_no+1).nodal = netstat_nodes(:,length(taus)+1:2*length(taus));
+		end
 
 		switch func2str(bct_funs{bct_num})
 		case 'betweenness_bin'
@@ -118,14 +137,28 @@ for metric_no = 1:length(opts.bct_num)
 		case	'clustering_coef_wu'
 			metrics(metric_no).name = func2str(bct_funs{bct_num});
 		case	'efficiency_wei'
-			metrics(metric_no).name = func2str(bct_funs{bct_num});
-		case	'current_flow_betweenness'
+			metrics(metric_no).name = 'WeightedEfficiency';
+			for tau=1:length(taus)
+			 tmpcentralization(:,tau)= centrality2centralization(netstat_nodes(:,tau),'eigenvector',0);
+			end
+			metrics(metric_no).centralization = tmpcentralization;
+			clear tmpcentralization;
+		case	'current_flow_metrics'
 			metrics(metric_no).name = 'RandomWalkBetweenness';
 			tmpcentralization = zeros(size(netstat_global));
 			for tau=1:length(taus)
-			 tmpcentralization(:,tau)= centrality2centralization(netstat_nodes(:,tau),'betweenness',opts.normalizeCentralization);
+			 		tmpcentralization(:,tau)= centrality2centralization(netstat_nodes(:,tau),'betweenness',opts.normalizeCentralization);
 			end
 			metrics(metric_no).centralization = tmpcentralization;
+			clear tmpcentralization
+
+			metrics(metric_no+1).name = 'RandomWalkCloseness';
+			tmpcentralization = zeros(size(netstat_global));
+			for tau=1:length(taus)
+					tmpcentralization(:,tau)= centrality2centralization(netstat_nodes(:,length(taus)+tau),'closeness',opts.normalizeCentralization);
+			end
+			metrics(metric_no+1).centralization = tmpcentralization;
+
 		case	'rand_hits'
 			metrics(metric_no).name = 'RegularizedHITS';
 		case	'rich_club_wu'

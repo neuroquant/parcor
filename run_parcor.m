@@ -25,9 +25,9 @@ load('pcnets_options.mat')
 
 for ii=1:length(opts.conditions)
 	filename = opts.outputFiles{ii};
-	load(filename,'Data');
+	load(filename,'WhData');
 
-	Data = Data(:,:,find([squeeze(sum(sum(Data,2),1))]));
+	Data = WhData(:,:,find([squeeze(sum(sum(WhData,2),1))]));
 
 	for cc=1:size(Data,3)
 		cc
@@ -68,5 +68,5 @@ for ii=1:length(opts.conditions)
 	save([filename '.mat'],'results','global_network','-append');
 	nii_struct = make_nii(global_network);
 	save_nii(nii_struct,[filename '.nii']);
-	clear Data results;
+	clear Data WhData results;
 end
