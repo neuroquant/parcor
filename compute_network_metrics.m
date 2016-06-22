@@ -58,6 +58,7 @@ netopts.normalizeCentralization = 0;
 netopts.date = datestr(now,'mmm-dd-yyyy-HHMM');
 warning('off', 'MATLAB:table:ModifiedVarnames')
 %%%%%%%%%%%%%%%%%%%%%%%
+tableMetrics = table();
 for ii=1:length(opts.conditions)
 	filename = opts.outputFiles{ii};
 	load(filename,'results');
@@ -69,46 +70,34 @@ for ii=1:length(opts.conditions)
 		% save results
 		results{cc}.metrics = tmp_metrics;
 		results{cc}.netopts = tmp_opts;
+		% export results
+		%%%%%%% Export to Tables %%%%%%%%%
+		condition = struct('SubjectID',{['Subject_' opts.subjIDs{ii}{cc}]}, 'idxThreshold', [1], ....
+										'StimLabel',opts.conditions(ii),'Resample','Resample0','gitcommit',thiscommit);
+	  tableMetrics = vertcat(tableMetrics,exportNetworkMetrics2Table(results{cc}.metrics,condition));
+	end
 		% clear temporary variables
 		clear tmpA tmp_metrics tmp_opts
+	try
+		gitlog = evalc('git log -1');
+	  thiscommit = {gitlog(15:25)};
+	catch
+		[unixs unixr] = unix('git log -1')
+		thiscommit = unixr;
 	end
-	save([filename '.mat'],'results','-append');
+	save([filename '.mat'],'results', 'thiscommit', '-append');
 end
-%%%%%%% Export to Tables %%%%%%%%%
+save(['Data/NetworkMetrics_' netopts.date '.mat'],'tableMetrics', 'thiscommit');
 
-% Create a table each row is one network curve tagged by (subject, resample, condition)
-% Add subject labels to each datafile
 
+load(['Data/NetworkMetrics_' netopts.date '.mat'],'tableMetrics');
+grammplot_metrics
 % for cc=3
 % 	for ii=1:(length(opts.conditions)-1)
 % 			filename = opts.outputFiles{ii};
 % 			load(filename,'results');
-% 			%%%%%%% Plot Results %%%%%%%%%%%
-% 			figure('Position',[100 100 800 400]); set(gcf,'Renderer','OpenGL');
-% 			%%%%%%%%%%%%%%%%%%%%%%%%
-% 			fontsz = 20;
-% 			g = gramm('x',results{cc}.netopts.taus,'y',results{cc}.metrics.centralization);
-% 			g.geom_point();
-% 			g.geom_line();
-% 			g.set_names('x','Thresholds','y','Centralization');
-% 			g.set_title(['Centralization, ', opts.conditions{ii}]);
-% 			%%%
-% 			% Do the actual drawing
-% 			g.draw();
-% 			ax(1) = get(gca,'xlabel'); ax(2) = get(gca,'ylabel'); ax(3) = get(gca,'title');
-% 			set(ax,'fontsize',fontsz)
-% 			set(gca,'linewidth',3)
 % 	end
 % end
-
-% %Jittered scatter plot
-% g(1,2).geom_jitter('width',0.4,'height',0);
-% g(1,2).set_title('geom_jitter()');
-
-% %Boxplots
-% g(2,2).stat_boxplot();
-% g(2,2).set_title('stat_boxplot()');
-%
 
 
 % Remove packages
