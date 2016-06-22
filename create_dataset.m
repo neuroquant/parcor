@@ -3,6 +3,7 @@
 % basepath = 'PNASData/pMFG_left_5.11/'
 % listfiles = dir(sprintf('%s/*pMFG*',basepath));
 
+
 load('pcnets_options.mat')
 
 for ii=1:length(opts.conditions)
@@ -35,6 +36,7 @@ for ii=1:length(opts.conditions)
 	Data = Xdata;
 	roinames = cell2struct(roinames,'name',30)
 	save([opts.outputFiles{ii} '.mat'],'Data','roinames','listfiles','nonzeroroiIdx','nonzerosubIdx');
+
 end
 
 isVisible = 0; % Set to opts.isVisible;

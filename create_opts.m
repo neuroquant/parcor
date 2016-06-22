@@ -15,4 +15,18 @@ opts.inputFiles = {'PNASData/pMFG_bilat_4.14/*pMFG*',...
                           'PNASResting/*RESTING*'};
 opts.conditions = {'R_pMFG','L_pMFG','R_aMFG','L_aMFG','Resting'};
 opts.outputFiles = strcat('Data/',opts.conditions, '_', datestr(now,'mmm-dd-yyyy'))
+ii=1
+basepath = opts.basepath{ii};
+listfiles = dir([opts.inputFiles{ii}]);
+listfiles = listfiles(find([listfiles.bytes]~=0));
+subjID_tmp = cell2table(regexp({listfiles(:).name},'_SP','split')');
+subjIDs = subjID_tmp.Var1(:,1);
+subjIDs = repmat({subjIDs}, [1 4]);
+ii=5
+basepath = opts.basepath{ii};
+listfiles = dir([opts.inputFiles{ii}]);
+listfiles = listfiles(find([listfiles.bytes]~=0));
+subjID_tmp = cell2table(regexp({listfiles(:).name},'_RESTING','split')');
+subjIDs = cat(2,subjIDs,{subjID_tmp.Var1(:,1)});
+opts.subjIDs = subjIDs;
 save('pcnets_options','opts')
