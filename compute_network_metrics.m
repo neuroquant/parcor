@@ -80,7 +80,7 @@ for ii=1:length(opts.conditions)
 		clear tmpA tmp_metrics tmp_opts
 	try
 		gitlog = evalc('git log -1');
-	  thiscommit = {gitlog(15:25)};
+	  thiscommit = {gitlog(16:25)};
 	catch
 		[unixs unixr] = unix('git log -1')
 		thiscommit = unixr;
@@ -89,8 +89,8 @@ for ii=1:length(opts.conditions)
 end
 save(['Data/NetworkMetrics_' netopts.date '.mat'],'tableMetrics', 'thiscommit');
 
-
-load(['Data/NetworkMetrics_' netopts.date '.mat'],'tableMetrics');
+currdate = 'Jun-16-2016-1722' ;
+load(['Data/NetworkMetrics_' currdate '.mat'],'tableMetrics');
 grammplot_metrics
 % for cc=3
 % 	for ii=1:(length(opts.conditions)-1)
