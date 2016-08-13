@@ -63,6 +63,8 @@ for cc=1:length(contrastLabels)
     diff_lme{cc} = fitlme(ds,[contrastLabels{cc} ' ~ 1 '])
 end
 
+ds_tall = stack(ds,contrastLabels,'NewDataVarNames','StimLabel');
+
 % fitlme(ds,[contrastLabels{1} ' ~  1 + ' contrastLabels{2}])
 % fitlme(ds,[contrastLabels{3} ' ~  1 + ' contrastLabels{4}])
 
