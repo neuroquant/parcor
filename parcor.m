@@ -29,7 +29,7 @@ function result = parcor(X,opts)
 	[m p] = size(X);
 
 	assert(length(size(X))==2,'X has wrong dimensions');
-	assert(m>2*p,'Sample size is inadequate for this function')
+	assert(m>p,'Sample size is inadequate for this function')
 	try
 		assert(abs(sum(mean(X(:,:,1))))<1e-10,'Not zero-mean centered. Please center time-series');
 		meanX_i = zeros(1,p);
