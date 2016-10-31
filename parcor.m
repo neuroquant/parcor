@@ -28,6 +28,11 @@ function result = parcor(X,opts)
 
 	[m p] = size(X);
 
+	nan_idx = find(sum(isnan(X))~=0);
+	if(~isempty(nan_idx))
+		X(:,nan_idx) = 0;
+	end
+
 	assert(length(size(X))==2,'X has wrong dimensions');
 	assert(m>10*log(p),'Sample size is inadequate for this function')
 	try			
@@ -56,15 +61,18 @@ function result = parcor(X,opts)
 	
 	% Rescale Sighat to be correlation matrix
 	diagW = diag(diag(Sighat));
-	Sighat = inv(sqrt(diagW))*Sighat*inv(sqrt(diagW));
-	Xcorr = bsxfun(@rdivide,X,diag(sqrt(diagW))');
-
 	try
 		assert(sum(diag(diagW)<=0)==0,'Zero or Negative Variances');
 	catch
-		disp('Covariance matrix is not positive definite');
+		disp('Some Variances Close to 0');
 		sum(diag(diagW)<=0)
+		diagW = diag(Sighat); 
+		diagW(diagW==0) = 1;
+		diagW = diag(diagW);
 	end
+	Sighat = inv(sqrt(diagW))*Sighat*inv(sqrt(diagW));
+	Xcorr = bsxfun(@rdivide,X,diag(sqrt(diagW))');
+
 
 
 
@@ -144,7 +152,7 @@ function result = parcor(X,opts)
 	end
 
 
-	useRidge = (opts.lambda~=0)*opts.ridgeType
+	useRidge = (opts.lambda~=0)*opts.ridgeType;
 
 	% if(~useRidge)
 	% 	Theta = inv(Sighat);
@@ -173,6 +181,7 @@ function result = parcor(X,opts)
 	case 3
 		disp('Using Ridge Penalization, Type I w. Constant Correlation Target')
 		Sigma = (1-opts.lambda)*Sighat + opts.lambda*Target;
+		opts.lambda
 		Theta = pinv(Sigma); % Type I, Ledoit-Wolf Ridge Penalty.
 	end
 
