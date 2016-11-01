@@ -33,6 +33,7 @@ elseif(isWeighted)
 	end
 end
 disp(['Metric Chosen is ' func2str(bct_funs{bct_num(1)}) ', isWeighted: ' num2str(isWeighted)])
+
 %%%%%%%%%%%%%%%%%%%%%%%
 n_thresh = 5; % Granularity of shrinkage or thresholding parameter
 isLogscale = 1; % Spacing between thresholds logarithmic
@@ -92,6 +93,7 @@ save(['Data/NetworkMetrics_' netopts.date '.mat'],'tableMetrics', 'thiscommit');
 currdate = 'Jun-16-2016-1722' ;
 load(['Data/NetworkMetrics_' currdate '.mat'],'tableMetrics');
 grammplot_metrics
+
 % for cc=3
 % 	for ii=1:(length(opts.conditions)-1)
 % 			filename = opts.outputFiles{ii};
