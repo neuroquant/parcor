@@ -100,8 +100,11 @@ for metric_no = 1:length(opts.bct_num)
 				end
 			case 'current_flow_metrics'
 				tmp_stats = feval(@callnetworkx,1*(abs(Sighat)>taus(tau)),0,0);
-				if(isScaled)
+				if(isScaled==1)
 					tmp_stats(:,1) = tmp_stats(:,1)/((p-1)*(p-2));
+				elseif(isScaled==2)
+					tmp_stats(:,1) = (tmp_stats(:,1)-min(tmp_stats(:,1)))./(max(tmp_stats(:,1))-min(tmp_stats(:,1))); 
+					tmp_stats(:,1) = (tmp_stats(:,2)-min(tmp_stats(:,2)))./(max(tmp_stats(:,2))-min(tmp_stats(:,2))); 						
 				end
 			case 'efficiency_bin'
 				tmp_stats = feval(bct_funs{bct_num},1*(abs(Sighat)>taus(tau)),1);
