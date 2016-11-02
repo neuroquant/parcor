@@ -68,13 +68,10 @@ for metric_no = 1:length(opts.bct_num)
 					assert(length(Ci)==p,'Community affiliation not specified for all nodes');
 					tmp_stats = feval(bct_funs{bct_num},abs(softthreshSig),Ci,0);
 					if(isScaled)
-						tmpstats = (tmpstats-min(tmpstats))./(max(tmpstats)-min(tmpstats)); 
+						tmp_stats = (tmp_stats-min(tmp_stats))./(max(tmp_stats)-min(tmp_stats)); 
 					end
 				case 'eigenvector_centrality_und'
 					tmp_stats = feval(bct_funs{bct_num},affinitySig);
-					if(isScaled)
-						tmpstats = (tmpstats-min(tmpstats))./(max(tmpstats)-min(tmpstats)); 
-					end	
 				otherwise
 					tmp_stats = feval(bct_funs{bct_num},affinitySig);
 			end
@@ -113,13 +110,10 @@ for metric_no = 1:length(opts.bct_num)
 				assert(length(Ci)==p,'Community affiliation not specified for all nodes');
 				tmp_stats = feval(bct_funs{bct_num},abs(softthreshSig),Ci,0);
 				if(isScaled)
-					tmpstats = (tmpstats-min(tmpstats))./(max(tmpstats)-min(tmpstats)); 
+					tmp_stats = (tmp_stats-min(tmp_stats))./(max(tmp_stats)-min(tmp_stats)); 
 				end
 			case 'eigenvector_centrality_und'
-				tmp_stats = feval(bct_funs{bct_num},1*(abs(Sighat)>taus(tau)));
-				if(isScaled)
-					tmpstats = (tmpstats-min(tmpstats))./(max(tmpstats)-min(tmpstats)); 
-				end		
+				tmp_stats = feval(bct_funs{bct_num},1*(abs(Sighat)>taus(tau)));	
 			otherwise
 				tmp_stats = feval(bct_funs{bct_num},1*(abs(Sighat)>taus(tau)));
 			end
