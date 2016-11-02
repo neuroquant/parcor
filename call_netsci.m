@@ -6,6 +6,7 @@ function [metrics, opts] = call_netsci(A,opts)
 	isWeighted = opts.isWeighted;
 	isScaled = opts.isScaled;
 	isDirected = opts.isDirected;
+	Ci = opts.Ci;
 
 	% Test binary or weighted
 
@@ -61,6 +62,19 @@ for metric_no = 1:length(opts.bct_num)
 					end
 				case 'efficiency_wei'
 					tmp_stats = feval(bct_funs{bct_num},affinitySig,1);
+					
+				case 'participation_coef'
+					assert(~isempty(Ci),'Community affiliation is empty in opts.Ci'); 
+					assert(length(Ci)==p,'Community affiliation not specified for all nodes');
+					tmp_stats = feval(bct_funs{bct_num},abs(softthreshSig),Ci,0);
+					if(isScaled)
+						tmpstats = (tmpstats-min(tmpstats))./(max(tmpstats)-min(tmpstats)); 
+					end
+				case 'eigenvector_centrality_und'
+					tmp_stats = feval(bct_funs{bct_num},affinitySig);
+					if(isScaled)
+						tmpstats = (tmpstats-min(tmpstats))./(max(tmpstats)-min(tmpstats)); 
+					end	
 				otherwise
 					tmp_stats = feval(bct_funs{bct_num},affinitySig);
 			end
@@ -94,6 +108,18 @@ for metric_no = 1:length(opts.bct_num)
 				end
 			case 'efficiency_bin'
 				tmp_stats = feval(bct_funs{bct_num},1*(abs(Sighat)>taus(tau)),1);
+			case 'participation_coef'
+				assert(~isempty(Ci),'Community affiliation is empty in opts.Ci'); 
+				assert(length(Ci)==p,'Community affiliation not specified for all nodes');
+				tmp_stats = feval(bct_funs{bct_num},abs(softthreshSig),Ci,0);
+				if(isScaled)
+					tmpstats = (tmpstats-min(tmpstats))./(max(tmpstats)-min(tmpstats)); 
+				end
+			case 'eigenvector_centrality_und'
+				tmp_stats = feval(bct_funs{bct_num},1*(abs(Sighat)>taus(tau)));
+				if(isScaled)
+					tmpstats = (tmpstats-min(tmpstats))./(max(tmpstats)-min(tmpstats)); 
+				end		
 			otherwise
 				tmp_stats = feval(bct_funs{bct_num},1*(abs(Sighat)>taus(tau)));
 			end
@@ -162,6 +188,8 @@ for metric_no = 1:length(opts.bct_num)
 		case	'rand_hits'
 			metrics(metric_no).name = 'RegularizedHITS';
 		case	'rich_club_wu'
+			metrics(metric_no).name = func2str(bct_funs{bct_num});
+		case 'participation_coef'
 			metrics(metric_no).name = func2str(bct_funs{bct_num});
 		otherwise
 			metrics(metric_no).name = func2str(bct_funs{bct_num});
