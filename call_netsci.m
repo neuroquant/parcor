@@ -80,10 +80,10 @@ for metric_no = 1:length(opts.bct_num) %*sum([opts.number{opts.bct_num}]))
 					assert(length(alt_Ci)==p,'Community affiliation not specified for all nodes');
 					tmp_stats = zeros(size(alt_Ci));
 					for cc=1:size(alt_Ci,2);
-						tmp_stats(:,cc) = feval(@participation_coef,abs(softthreshSig),1*alt_Ci(:,cc),0);
-						if(isScaled)
-							tmp_stats(:,cc) = (tmp_stats(:,cc)-min(tmp_stats(:,cc)))./(max(tmp_stats(:,cc))-min(tmp_stats(:,cc))); 
-						end
+						tmp_stats(:,cc) = feval(@community_participation,abs(softthreshSig),1*alt_Ci(:,cc),0);
+						% if(isScaled)
+						% 	tmp_stats(:,cc) = (tmp_stats(:,cc)-min(tmp_stats(:,cc)))./(max(tmp_stats(:,cc))-min(tmp_stats(:,cc)));
+						% end
 					end
 				case 'participation_coef'
 					assert(~isempty(Ci),'Community affiliation is empty in opts.Ci'); 
@@ -144,10 +144,10 @@ for metric_no = 1:length(opts.bct_num) %*sum([opts.number{opts.bct_num}]))
 				assert(length(alt_Ci)==p,'Community affiliation not specified for all nodes');
 				tmp_stats = zeros(size(alt_Ci));
 				for cc=1:size(alt_Ci,3);
-					tmp_stats(:,cc) = feval(@participation_coef,1*(abs(Sighat)>taus(tau)),alt_Ci(:,cc),0);
-					if(isScaled)
-						tmp_stats(:,cc) = (tmp_stats(:,cc)-min(tmp_stats(:,cc)))./(max(tmp_stats(:,cc))-min(tmp_stats(:,cc))); 
-					end
+					tmp_stats(:,cc) = feval(@community_participation,1*(abs(Sighat)>taus(tau)),alt_Ci(:,cc),0);
+					% if(isScaled)
+					% 	tmp_stats(:,cc) = (tmp_stats(:,cc)-min(tmp_stats(:,cc)))./(max(tmp_stats(:,cc))-min(tmp_stats(:,cc)));
+					% end
 				end
 					
 			case 'participation_coef'
