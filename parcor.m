@@ -43,7 +43,7 @@ function result = parcor(X,opts)
 		if(abs(sum(mean(X(:,:,1))))>1e-10)
 			meanX_i = mean(X,1);
 			X = bsxfun(@minus,X,mean(X,1));
-			assert(abs(sum(mean(X(:,:,1))))<1e-10,'Unsuccessful centering time-series')
+			assert(abs(sum(mean(X(:,:,1))))<1e-7,'Unsuccessful centering time-series')
 			meanX_i = mean(X,1);
 		else
 			meanX_i = zeros(1,p); 
