@@ -1,0 +1,29 @@
+Here we have implemented a partial correlation estimation toolbox coupled with population inference for network metrics applied to partial correlation networks.
+
+To make a record of a data analysis run on sumatra
+
+```
+smt configure -m pymat_run_main.py -e python --datapath ./Data --archive ./archive --input .
+smt run -l "trial_xxx" -r "Test feature Y.2"
+
+```
+
+
+
+
+## Updates
+
+Update June 23-2016:
+- KGGMScript no longer a submodule.
+- Master branch updated with network metrics
+- add_network_metrics will be deleted in the future, as it has been merged.
+
+Update June 07-2016:
+Note: Although there is a submodule KGGMScript, it is currently unnecessary to use.
+
+## LICENSE
+
+This toolbox is licensed under the BSD "new" license.
+The software license does not apply to the python scripts in the folder python or to external libraries used. 
+
+
