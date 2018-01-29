@@ -25,7 +25,6 @@ function result = parcor(X,opts)
 	% Examples
 	% result = parcar(X,[]) % Use default options
 
-
 	[m p] = size(X);
 
 	nan_idx = find(sum(isnan(X))~=0);
@@ -38,7 +37,8 @@ function result = parcor(X,opts)
 	try			
 		meanX_i = zeros(1,p); 
 		assert(abs(sum(mean(X(:,:,1))))<1e-10,'Not zero-mean centered. Please center time-series');
-	catch
+	catch me
+        disp(me)
 		disp('Centering time-series')
 		if(abs(sum(mean(X(:,:,1))))>1e-10)
 			meanX_i = mean(X,1);
@@ -78,6 +78,7 @@ function result = parcor(X,opts)
 
 	if(isempty(opts))
 		Target = [];
+        opts.ridgeType = 0;
 	elseif(isfield(opts,'Target'))
 		Target = opts.Target;
 	else
@@ -116,12 +117,14 @@ function result = parcor(X,opts)
 			% opts.lambda = max(0,min(1,opts.lambda_ss));
 			if(opts.ridgeType==1|opts.ridgeType==3)
 
+				W_kij = zeros(size(X,1),size(X,2),size(X,2)); 
 				% Shaffer-Strimmer, analytical formula for type D
 				for ii=1:p
 					for jj=ii+1:p
 						W_kij(:,ii,jj) = (Xcorr(:,ii)-meanX_i(ii)).*(Xcorr(:,jj)-meanX_i(jj));
 						W_kij(:,jj,ii) = W_kij(:,ii,jj);
 					end
+					
 				end
 				if(m>p)
 					assert(sum(sum(triu(Sighat-squeeze(mean(W_kij,1)),1).^2))/nchoosek(p,2)< 1e-3,'Verifying mean W_kij is empirical covariance');
@@ -135,6 +138,7 @@ function result = parcor(X,opts)
 
 			elseif(opts.ridgeType==2)
 
+				W_kij = zeros(size(X,1),size(X,2),size(X,2)); 
 				% Shaffer-Strimmer, analytical formula for type A
 				for ii=1:p
 					for jj=ii:p
@@ -163,6 +167,7 @@ function result = parcor(X,opts)
 	switch useRidge
 
 	case 0
+        disp('No Ridge Regularization');
 		%Target = [];
 		Sigma = Sighat;
 		Theta = pinv(Sigma);
