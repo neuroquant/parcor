@@ -7,8 +7,9 @@ function result = parcor(X,opts)
 	%
 	% opts
 	% opts.lambda: 	ridge penalty. 0 by default if n_samples > 3*n_regions else set to .1
-	% opts.ridgeType: no penalty, ridge type 1 or ridge type 2
-	%
+	% opts.ridgeType: no penalty (0), ridge type 1, 2 or 3
+	% opts.visible: Defaults to true
+    %   
 	% OUTPUT
 	%
 	% result
@@ -55,7 +56,8 @@ function result = parcor(X,opts)
 
 	try
 		assert(sum(diag(D)<=0)==0,'Zero or Negative Eigenvalues');
-	catch
+	catch me
+        disp(me)
 		disp('Covariance matrix is not positive definite');
 	end
 	
@@ -78,7 +80,9 @@ function result = parcor(X,opts)
 
 	if(isempty(opts))
 		Target = [];
+        opts.lambda = [];
         opts.ridgeType = 0;
+        opts.visible = true;
 	elseif(isfield(opts,'Target'))
 		Target = opts.Target;
 	else
@@ -97,7 +101,7 @@ function result = parcor(X,opts)
 	end
 		
 
-	if(isempty(opts)|isempty(opts.lambda))
+	if(isempty(opts.lambda))
 		% if(min(diag(D))>.001)
 		% 	% Dumb defaults, replace with analytic or CV based thresholds.
 		if(m>=10*p)
